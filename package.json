@@ -14,6 +14,9 @@
     "monaco-editor": "^0.17.1"
   },
   "scripts": {
-    "test": "mocha"
+    "test": "mocha",
+    "build": "webpack --config webpack.config.js",
+    "rebuild": "./gradlew generateParser && tsc && npm run build && npm start",
+    "start": "cd ./server &&  ../gradlew runServer && cd -"
   }
 }

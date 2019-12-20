@@ -3,11 +3,26 @@ parser grammar CalcParser;
 options { tokenVocab=CalcLexer; }
 
 compilationUnit:
+    (products+=product)*
     (inputs+=input)*
     (calcs+=calc)*
     (outputs+=output)*
     EOF
     ;
+
+product: PRODUCT_KW productIdentifier productCountryIssuance productClass eol;
+
+productCountryIssuance :
+  PRODUCT_COUNTRY_LIST
+  ;
+
+productClass : 
+    PRODUCT_CLASS
+;
+productIdentifier :
+IDENTIFIER 
+;
+
 
 eol:
     NL

@@ -10,13 +10,12 @@
 
 <h2>Calc Editor</h2>
 <div id="container" style="width:800px;height:600px;border:1px solid grey"></div>
-
+<div id="container2" style="width:800px;height:600px;border:1px solid grey"></div>
 <script src="node_modules/monaco-editor/min/vs/loader.js"></script>
 <script src="js/main.js"></script>
 
 <script>
 	require.config({ paths: { 'vs': 'node_modules/monaco-editor/min/vs' }});
-
 	require(['vs/editor/editor.main'], function() {
 		monaco.languages.register({ id: 'calc' });
 
@@ -27,7 +26,44 @@
 		let symbolsFg = '000000';
 		let keywordFg = '7132a8';
 		let errorFg = 'ff0000';
+		
 
+		function createDependencyProposals(range) {
+    // returning a static list of proposals, not even looking at the prefix (filtering is done by the Monaco editor),
+	// here you could do a server side lookup
+    return [
+        {
+            label: 'account',
+            kind: monaco.languages.CompletionItemKind.Function,
+            documentation: "The Lodash library exported as Node.js modules.",
+			insertText: 'Account( ',
+			range: range,
+        },
+    ];
+}
+// monaco.languages.registerCompletionItemProvider('calc', {
+//     provideCompletionItems: function(model, position) {
+// 		// find out if we are completing a property in the 'dependencies' object.
+// 		var currentLine = model.getLineCount()
+//         var textUntilPosition = model.getValueInRange({startLineNumber: currentLine, startColumn: 1, endLineNumber: currentLine, endColumn: position.column});
+//         var match = textUntilPosition.match(/Create\s*/);
+//         if (!match) {
+//             return { suggestions: [] };
+//         }
+//         var word = model.getWordUntilPosition(position);
+//         var range = {
+//             startLineNumber: currentLine,
+//             endLineNumber: currentLine,
+//             startColumn: word.startColumn,
+//             endColumn: word.endColumn
+//         };
+//         return {
+//             suggestions: createDependencyProposals(range)
+//         };
+//     }
+// });
+
+		
 		monaco.editor.defineTheme('myCoolTheme', {
 			base: 'vs',
 			inherit: false,
@@ -47,6 +83,7 @@
 
 				{ token: 'input_kw.calc',     foreground: keywordFg,  fontStyle: 'bold' },
 				{ token: 'output_kw.calc',    foreground: keywordFg,  fontStyle: 'bold' },
+				{ token: 'product_kw.calc',   foreground: keywordFg, fontStyle: 'bold'},
 
 				{ token: 'unrecognized.calc', foreground: errorFg }
 			]
@@ -72,6 +109,42 @@
 			language: 'calc',
 			theme: 'myCoolTheme'
 		});
+
+
+	editor.onDidChangeModelContent(function (e) {
+			monaco.languages.registerCompletionItemProvider('calc', {
+    provideCompletionItems: function(model, position) {
+		// find out if we are completing a property in the 'dependencies' object.
+		console.log(e);
+		var currentLine = e.changes[0].range.startLineNumber
+		var currentColumn = e.changes[0].range.endColumn
+		var fullText = model.getLineContent(currentLine);
+		var splitText = fullText.split(" ");
+		if (splitText.length > 1) {
+		
+		var createKeyWord = splitText[splitText.length-1]
+		var matches = createKeyWord.match(/Create/);
+		var match = splitText[splitText.length-2].match(/Create/)
+        if (!match) {
+			console.log("suggestions should be none");
+            return { suggestions: [] };
+        }
+        var word = model.getWordUntilPosition(position);
+        var range = {
+            startLineNumber: currentLine,
+            endLineNumber: currentLine,
+            startColumn: word.startColumn,
+            endColumn: word.endColumn
+        };
+        return {
+            suggestions: createDependencyProposals(range)
+		};
+	}
+    }
+});
+		});
+
+
 		editor.onDidChangeModelContent(function (e) {
 			let code = editor.getValue()
 			let syntaxErrors = ParserFacade.validate(code);
@@ -90,7 +163,6 @@
 			let model = monaco.editor.getModels()[0];
 			monaco.editor.setModelMarkers(model, "owner", monacoErrors);
 		});
-
 	});
 </script>
 </body>
